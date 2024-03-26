@@ -20,7 +20,7 @@
 <details>
 <summary><b>&nbsp;Orange Pi Zero3 插件预览</b></summary>
 <br/>
-<img src="https://cdn.jsdelivr.net/gh/haiibo/OpenWrt/images/plus.png"/>
+<img src="https://raw.githubusercontent.com/jym66/openWRT-OrangePiZero3/main/images/openwrt1.png"/>
 </details>
 
 
