@@ -2,8 +2,8 @@ name: zero3 OpenWrt
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: 0 17 * * *
+  # schedule:
+  #   - cron: 0 17 * * *
 
 env:
   REPO_URL: https://github.com/coolsnowwolf/lede
