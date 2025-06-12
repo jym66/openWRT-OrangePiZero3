@@ -129,6 +129,8 @@ jobs:
         cd $OPENWRT_PATH
         mkdir -p files/etc/uci-defaults
         cp $GITHUB_WORKSPACE/scripts/init-settings.sh files/etc/uci-defaults/99-init-settings
+        export CFLAGS="$CFLAGS -Wno-error"
+        export CXXFLAGS="$CXXFLAGS -Wno-error"
         echo -e "$(nproc) thread compile"
         make -j$(nproc) || make -j1 || make -j1 V=s
         echo "status=success" >> $GITHUB_OUTPUT
