@@ -1,4 +1,10 @@
 #!/bin/bash
+set -e
+
+# Skip terminal preset assets when zsh is not selected in the build config.
+if ! grep -q '^CONFIG_PACKAGE_zsh=y' .config; then
+  exit 0
+fi
 
 mkdir -p files/root
 pushd files/root
