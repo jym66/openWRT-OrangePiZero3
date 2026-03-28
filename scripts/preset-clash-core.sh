@@ -1,28 +1,53 @@
 #!/bin/bash
 set -euo pipefail
 
-mkdir -p files/etc/openclash/core
+ARCH="${1:-}"
+CORE_TYPE="${2:-Meta}"
+RELEASE_BRANCH="${3:-master}"
 
-if [ -z "$1" ]; then
-  echo "missing clash kernel architecture" >&2
+if [ -z "$ARCH" ]; then
+  echo "missing clash core architecture" >&2
+  echo "usage: $0 <arch> [Meta|Smart] [release_branch]" >&2
   exit 1
 fi
 
-CLASH_DEV_URL="https://raw.githubusercontent.com/vernesong/OpenClash/core/master/dev/clash-linux-${1}.tar.gz"
-CLASH_TUN_URL=$(curl -fsSL "https://api.github.com/repos/vernesong/OpenClash/contents/master/premium?ref=core" | grep download_url | grep "$1" | awk -F '"' '{print $4}' | grep -v 'v3' | head -n 1)
-CLASH_META_URL="https://raw.githubusercontent.com/vernesong/OpenClash/core/master/meta/clash-linux-${1}.tar.gz"
-GEOIP_URL="https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat"
-GEOSITE_URL="https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
+case "${CORE_TYPE}" in
+  Meta|meta)
+    CORE_DIR="meta"
+    ;;
+  Smart|smart)
+    CORE_DIR="smart"
+    ;;
+  *)
+    echo "invalid core type: ${CORE_TYPE}, expected Meta or Smart" >&2
+    exit 1
+    ;;
+esac
 
-if [ -z "$CLASH_TUN_URL" ]; then
-  echo "failed to resolve clash_tun download url for $1" >&2
+mkdir -p files/etc/openclash/core files/etc/openclash
+TMPDIR="$(mktemp -d)"
+trap 'rm -rf "$TMPDIR"' EXIT
+
+CORE_URL="https://raw.githubusercontent.com/vernesong/OpenClash/core/${RELEASE_BRANCH}/${CORE_DIR}/clash-${ARCH}.tar.gz"
+
+echo "Downloading ${CORE_TYPE} core for ${ARCH} from branch ${RELEASE_BRANCH} ..."
+if ! wget --spider -q "$CORE_URL"; then
+  echo "core url not found: $CORE_URL" >&2
   exit 1
 fi
 
-wget -qO- "$CLASH_DEV_URL" | tar xOvz > files/etc/openclash/core/clash
-wget -qO- "$CLASH_TUN_URL" | gunzip -c > files/etc/openclash/core/clash_tun
-wget -qO- "$CLASH_META_URL" | tar xOvz > files/etc/openclash/core/clash_meta
-wget -qO- "$GEOIP_URL" > files/etc/openclash/GeoIP.dat
-wget -qO- "$GEOSITE_URL" > files/etc/openclash/GeoSite.dat
+wget -qO "$TMPDIR/clash_meta.tar.gz" "$CORE_URL"
+tar -xzf "$TMPDIR/clash_meta.tar.gz" -C "$TMPDIR"
 
-chmod +x files/etc/openclash/core/clash*
+if [ ! -f "$TMPDIR/clash" ]; then
+  echo "archive extracted, but clash binary not found" >&2
+  exit 1
+fi
+
+install -m 0755 "$TMPDIR/clash" files/etc/openclash/core/clash_meta
+
+wget -qO files/etc/openclash/GeoIP.dat   "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat"
+wget -qO files/etc/openclash/GeoSite.dat "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
+
+echo "Done."
+echo "Core saved to files/etc/openclash/core/clash_meta"

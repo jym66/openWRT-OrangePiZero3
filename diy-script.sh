@@ -3,6 +3,8 @@ set -e
 
 # 移除要替换的 Argon 主题
 rm -rf feeds/luci/themes/luci-theme-argon
+rm -rf feeds/luci/applications/luci-app-argon-config
+rm -rf feeds/luci/applications/luci-app-openclash
 
 # Git 稀疏克隆
 function git_sparse_clone() {
