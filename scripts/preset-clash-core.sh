@@ -27,8 +27,7 @@ esac
 mkdir -p files/etc/openclash/core files/etc/openclash
 TMPDIR="$(mktemp -d)"
 trap 'rm -rf "$TMPDIR"' EXIT
-
-CORE_URL="https://raw.githubusercontent.com/vernesong/OpenClash/core/${RELEASE_BRANCH}/${CORE_DIR}/clash-${ARCH}.tar.gz"
+CORE_URL="https://raw.githubusercontent.com/vernesong/OpenClash/core/${RELEASE_BRANCH}/${CORE_DIR}/clash-linux-${ARCH}.tar.gz"
 
 echo "Downloading ${CORE_TYPE} core for ${ARCH} from branch ${RELEASE_BRANCH} ..."
 if ! wget --spider -q "$CORE_URL"; then
