@@ -2,8 +2,9 @@ name: zero3 OpenWrt
 
 on:
   workflow_dispatch:
-  # schedule:
-  #   - cron: 0 17 * * *
+  schedule:
+    # 00:00 every Thursday in Asia/Shanghai = 16:00 every Wednesday in UTC
+    - cron: 0 16 * * 3
 
 env:
   REPO_URL: https://github.com/coolsnowwolf/lede
@@ -12,6 +13,7 @@ env:
   EXTRA_CONFIG: configs/extra.config
   DIY_SCRIPT: diy-script.sh
   CLASH_KERNEL: arm64
+  DEFAULT_PASSWORD: password
   CACHE_TOOLCHAIN: true
   UPLOAD_BIN_DIR: false
   FIRMWARE_RELEASE: true
@@ -116,6 +118,10 @@ jobs:
         $GITHUB_WORKSPACE/$DIY_SCRIPT
         $GITHUB_WORKSPACE/scripts/preset-clash-core.sh $CLASH_KERNEL
         $GITHUB_WORKSPACE/scripts/preset-terminal-tools.sh
+        CONFIG_GENERATE_FILE="package/base-files/files/bin/config_generate"
+        DEFAULT_IP=$(grep -E 'lan\) ipad=\$\{ipaddr:-"' "$CONFIG_GENERATE_FILE" | sed -E 's/.*ipaddr:-"([0-9.]+)".*/\1/' | head -n 1)
+        [ -n "$DEFAULT_IP" ] || DEFAULT_IP="192.168.1.1"
+        echo "DEFAULT_IP=$DEFAULT_IP" >> $GITHUB_ENV
 
     - name: Download DL Package
       run: |
@@ -137,6 +143,7 @@ jobs:
         echo "status=success" >> $GITHUB_OUTPUT
         echo "DATE=$(date +"%Y-%m-%d %H:%M:%S")" >> $GITHUB_ENV
         echo "FILE_DATE=$(date +"%Y.%m.%d")" >> $GITHUB_ENV
+        echo "RELEASE_TAG=${FIRMWARE_TAG}-$(date +"%Y.%m.%d-%H%M")-${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
 
     - name: Check Space Usage
       if: (!cancelled())
@@ -173,19 +180,20 @@ jobs:
       uses: ncipollo/release-action@v1
       with:
         name: R${{ env.DATE }} for ${{ env.FIRMWARE_TAG }}
-        allowUpdates: true
-        tag: ${{ env.FIRMWARE_TAG }}
+        allowUpdates: false
+        tag: ${{ env.RELEASE_TAG }}
         token: ${{ secrets.GITHUB_TOKEN }}
         artifacts: ${{ env.FIRMWARE_PATH }}/*
         body: |
           **This is OpenWrt Firmware for ${{ env.FIRMWARE_TAG }}**
+          - 🏷️ 发布标签: ${{ env.RELEASE_TAG }}
           ### 📒 固件信息
           - 💻 平台架构: ${{ env.DEVICE_TARGET }}-${{ env.DEVICE_SUBTARGET }} (香橙派zero3)
           - ⚽ 固件源码: ${{ env.REPO_URL }}
           - 💝 源码分支: ${{ env.REPO_BRANCH }}
           - 🚀 内核版本: ${{ env.KERNEL }}
-          - 🌐 默认地址: 192.168.1.1
-          - 🔑 默认密码: password
+          - 🌐 默认地址: ${{ env.DEFAULT_IP }}
+          - 🔑 默认密码: ${{ env.DEFAULT_PASSWORD }}
           ### 🧊 固件版本
           - 固件编译前最后一次➦[主源码](${{ env.REPO_URL }})更新记录
           - ${{ env.COMMIT_AUTHOR }}
