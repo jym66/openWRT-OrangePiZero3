@@ -7,8 +7,8 @@ on:
     - cron: 0 16 * * 3
 
 env:
-  REPO_URL: https://github.com/immortalwrt/immortalwrt
-  REPO_BRANCH: openwrt-24.10
+  REPO_URL: https://github.com/coolsnowwolf/lede
+  REPO_BRANCH: master
   CONFIG_FILE: configs/zero3.config
   EXTRA_CONFIG: configs/extra.config
   DIY_SCRIPT: diy-script.sh
